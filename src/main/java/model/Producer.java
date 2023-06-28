@@ -13,6 +13,7 @@ public class Producer {
     private final LinkedBlockingQueue<String> messageBuffer;
     private final List<LocalDateTime> limitedTimeMessageBuffer;
     private final List<Consumer> consumers = new ArrayList<>();
+    private Thread startProcessingMessages;
 
 
     private final static Integer LIMIT = 5;
@@ -22,8 +23,8 @@ public class Producer {
     public Producer() {
         this.messageBuffer = new LinkedBlockingQueue<>();
         this.limitedTimeMessageBuffer = Collections.synchronizedList(new ArrayList<>());
-        final Thread startProcessingMessages = new Thread(this::send);
-        startProcessingMessages.start();
+        this.startProcessingMessages = new Thread(this::send);
+        this.startProcessingMessages.start();
     }
 
     public void addConsumer(final Consumer consumer) {
@@ -57,13 +58,14 @@ public class Producer {
     }
 
     private void send() {
-        consumers.stream().parallel().forEach(consumer -> {
-            try {
-                consumer.consume(String.valueOf(messageBuffer.poll(LIMITED_TIME, TimeUnit.MILLISECONDS)));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        send();
+        while (true) {
+            consumers.stream().parallel().forEach(consumer -> {
+                try {
+                    consumer.consume(String.valueOf(messageBuffer.poll(LIMITED_TIME, TimeUnit.MILLISECONDS)));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
     }
 }
