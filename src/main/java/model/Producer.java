@@ -34,21 +34,20 @@ public class Producer {
     public void produce(final String message) {
         synchronized (limitedTimeMessageBuffer) {
             if (limitedTimeMessageBuffer.size() >= LIMIT) {
-                if (limitedTimeMessageBuffer
+                final boolean isOutLimit = limitedTimeMessageBuffer
                         .stream()
-                        .anyMatch(messageTime -> Duration.between(LocalDateTime.now(), messageTime).toMillis() > LIMITED_TIME)) {
-                    limitedTimeMessageBuffer.clear();
-                } else {
+                        .anyMatch(messageTime -> Duration.between(LocalDateTime.now(), messageTime).toMillis() > LIMITED_TIME);
+                if (!isOutLimit) {
                     try {
                         final long sleepTime = LIMITED_TIME - Duration
                                 .between(LocalDateTime.now(), limitedTimeMessageBuffer.get(0))
                                 .toMillis();
                         Thread.sleep(sleepTime);
-                        limitedTimeMessageBuffer.clear();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
+                limitedTimeMessageBuffer.clear();
             } else {
                 limitedTimeMessageBuffer.add(LocalDateTime.now());
             }
