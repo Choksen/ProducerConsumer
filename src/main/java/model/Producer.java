@@ -22,6 +22,8 @@ public class Producer {
     public Producer() {
         this.messageBuffer = new LinkedBlockingQueue<>();
         this.limitedTimeMessageBuffer = Collections.synchronizedList(new ArrayList<>());
+        final Thread startProcessingMessages = new Thread(this::send);
+        startProcessingMessages.start();
     }
 
     public void addConsumer(final Consumer consumer) {
@@ -54,7 +56,7 @@ public class Producer {
         System.out.println("sent: " + message);
     }
 
-    public void send() {
+    private void send() {
         consumers.stream().parallel().forEach(consumer -> {
             try {
                 consumer.consume(String.valueOf(messageBuffer.poll(LIMITED_TIME, TimeUnit.MILLISECONDS)));

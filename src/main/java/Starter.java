@@ -41,7 +41,6 @@ public class Starter {
             });
             producers.submit(prod);
         }
-        producer.send();
     }
 
     public static void main(String[] args) {
